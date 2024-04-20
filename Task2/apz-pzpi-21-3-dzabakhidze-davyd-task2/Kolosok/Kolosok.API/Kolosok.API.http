@@ -1,0 +1,6 @@
+@Kolosok.API_HostAddress = http://localhost:5241
+
+GET {{Kolosok.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
