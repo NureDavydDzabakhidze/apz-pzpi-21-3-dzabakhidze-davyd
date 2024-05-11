@@ -1,0 +1,6 @@
+@Kolosok.Presentation_HostAddress = http://localhost:5243
+
+GET {{Kolosok.Presentation_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
