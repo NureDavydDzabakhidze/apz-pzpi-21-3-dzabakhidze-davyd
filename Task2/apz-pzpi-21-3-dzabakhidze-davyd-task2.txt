@@ -1,0 +1,480 @@
+1.1.	Мета роботи
+
+
+Розробити серверну частину програмної системи для надання допомоги постраждалим з використанням браслетів з підтримкою NFC, описати основні сутності, прийняті інженерні рішення, загальну архітектуру системи, показати будову її серверних компонентів та структуру бази даних.
+
+
+1.2.	Хід роботи
+
+
+1.2.1 Опис основних сутностей системи
+
+
+		ER-модель складається з 6 сутностей. Пройдемося по основним зв’язкам між ними:
+
+«Контакт» - «Рятувальник» і «Контакт» - «Постраждалий» мають зв’язок один-до- одного;
+
+«Постраждалий» - «Діагноз» мають зв’язок один-до-багатьох (у постраждалого може бути багато діагнозів, а діагноз є індивідуальним для кожного постраждалого);
+
+«Постраждалий» - «Дія» мають зв’язок один-до-багатьох (у одного постраждалого може бути багато викликів, але дії можуть відноситися тільки до одного постраждалого;
+
+«Бригада» - «Рятувальник» мають зв’язок один до багатьох (у однієї бригади може бути багато рятувальників, але рятувальник може бути тільки в одній);
+
+«Рятувальник» - «Дія» мають зв’язок один-до-багатьох (один рятувальник може створити багато дій які відносяться до одного постраждалого).
+
+З побудованих вище зв’зків можна побачити, що «Постраждалий» та «Рятувальник» мають багато спільних таблиць, завдяки чому вони можуть взаємодіяти між собою. Нижче наведена ER-модель даних.
+
+
+ 
+Рисунок 1 – ER-модель даних
+
+
+1.2.2 Розробка UML діаграми прецедентів (Use Case Diagram)
+
+
+Після визначення основних сутностей системи слід описати їх можливості. Для цього зобразимо діаграми прецедентів програмної системи для моніторингу стану пацієнтів (рисунок 2). 
+
+ 
+Рисунок 2 – Діаграма прецедентів
+
+
+1.2.3 Діаграма розгортання
+
+
+	Далі перейдемо до діаграми розгортання. Вона відображає усі необхідні файли для розгортання системи, а також зв’язок з базою даних (див. рис. 3).
+
+ 
+Рисунок 3 – UML діаграма розгортання
+
+
+1.2.4 – Діаграма пакетів та архітектура програмної системи
+
+
+Було створено діаграму пакетів (Package Diagram), яка ілюструє різні рівні архітектури програмної системи (рис 4). Ця діаграма показує взаємозв’язки між пакетами та способи їх використання одне одним для виконання своїх завдань.
+
+ 
+Рисунок 4 – Діаграма пакетів
+
+
+
+1.2.5 Специфікація REST API
+
+
+Для обміну даними було обрано RESTful API — це архітектурний стиль інтерфейсу прикладної програми (API), який використовує запити HTTP для доступу та використання даних. Щоб реалізувати це, для кожною основної сутності програмної системи було створено окремий контролер, у якому прописані усі маршрути для взаємодії. Нище наведені прикладі цих маршрутів та їх призначення.
+
+Таблиця 1 – Специфікація REST API
+Посилання	Метод	Призначення
+GET	/api/v1/brigades	Отримати список всіх бригад з можливістю фільтрації за допомогою параметрів запиту
+POST	/api/v1/brigades	Створити нову бригаду за допомогою переданих даних в тілі запиту
+PUT	/api/v1/brigades/{id}	Оновити інформацію про бригаду за допомогою переданих даних в тілі запиту
+DELETE	/api/v1/brigades/{id}	Видалити бригаду за допомогою переданих даних у параметрах запиту
+GET	/api/v1/brigades/{id}	Отримати інформацію про конкретну бригаду
+GET	/api/v1/brigade-rescuers	Отримати список всіх рятувальників бригади з можливістю фільтрації за допомогою параметрів запиту
+POST	/api/v1/brigade-rescuers	Створити нового рятувальника бригади за допомогою переданих даних в тілі запиту
+GET	/api/v1/brigade-rescuers/{id}	Отримати інформацію про конкретного рятувальника бригади
+Таблиця 1.2 – Продовження таблиці
+GET	/api/v1/brigade-rescuers/{id}/qrcode	Отримати QR-код для рятувальника бригади
+PUT	/api/v1/brigade-rescuers/{id}	Оновити інформацію про рятувальника бригади за допомогою переданих даних в тілі запиту
+DELETE	/api/v1/brigade-rescuers/{id}	Видалити рятувальника бригади за допомогою переданих даних у параметрах запиту
+GET	/api/v1/victim/{id:guid}/qrcode	Отримати QR-код для потерпілого за його ідентифікатором
+GET	/api/v1/victim	Отримати список всіх потерпілих з можливістю фільтрації за допомогою параметрів запиту
+GET	/api/v1/victim/{id:guid}	Отримати інформацію про конкретного потерпілого за його ідентифікатором
+POST	/api/v1/victim	Створити нового потерпілого за допомогою переданих даних в тілі запиту
+PUT	/api/v1/victim/{id:guid}	Оновити інформацію про потерпілого за допомогою переданих даних в тілі запиту
+DELETE	/api/v1/victim/{id:guid}	Видалити потерпілого за його ідентифікатором
+GET	/api/v1/diagnosis	Отримати список всіх діагнозів з можливістю фільтрації за допомогою параметрів запиту
+GET	/api/v1/diagnosis/{id:guid}	Отримати інформацію про конкретний діагноз за його ідентифікатором
+POST	/api/v1/diagnosis	Створити новий діагноз за допомогою переданих даних в тілі запиту
+PUT	/api/v1/diagnosis/{id:guid}	Оновити інформацію про діагноз за допомогою переданих даних в тілі запиту
+DELETE	/api/v1/diagnosis/{id:guid}	Видалити діагноз за його ідентифікатором
+POST	/api/v1/auth/login	Автентифікація користувача. Приймає дані користувача для входу в систему і повертає JWT-токен для авторизації.
+GET	/api/v1/auth/profile	Отримання профілю користувача. Вимагає наявності JWT-токена у заголовках запиту для доступу до профілю користувача.
+POST	/api/v1/auth/refresh	Оновлення JWT-токена. Використовується для оновлення токена після закінчення його терміну дії.
+POST	/api/v1/auth/register	Реєстрація нового користувача. Приймає дані нового користувача і створює обліковий запис в системі.
+GET	/api/v1/backup	Отримати резервну копію бази даних у вигляді файлу
+POST	/api/v1/backup	Відновити базу даних із резервної копії, яка передається в тілі запиту у вигляді масиву байтів
+POST	/api/v1/localization/change	Зміна локалізації
+
+
+1.2.6 Опис прийнятих інженерних рішень
+
+
+1.2.6.1 Аутентифікація
+
+
+	Аутентифікація відбувається за допомогою JWT-токенів. Повний код наведений в додатку А.
+Щоб увійти у систему користувач повинен надіслати адресу своєї електронної пошти та пароль. Після цього вони валідуються на сервері із використанням методів та формується JWT-токен. Код методу генерації токену користувача:
+
+1 public string GenerateAccessToken(IEnumerable<Claim> claims)
+2         {
+3             var secretKey = new SymmetricSecurityKey("superSecretKey@345superSecretKey@345superSecretKey@345"u8.ToArray());
+4             var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
+5             var cleanedClaims = claims.Select(claim =>
+6             {
+7                 var type = claim.Type
+8                     .Replace("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/", "")
+9                     .Replace("http://schemas.microsoft.com/ws/2008/06/identity/claims/", "");
+10                 return new Claim(type, claim.Value);
+11             });
+12             
+13             var tokeOptions = new JwtSecurityToken(
+14                 issuer: "http://localhost:5000",
+15                 audience: "http://localhost:5000",
+16                 claims: cleanedClaims,
+17                 expires: DateTime.Now.AddMinutes(60),
+18                 signingCredentials: signinCredentials
+19             );
+20 
+21             var tokenString = new JwtSecurityTokenHandler().WriteToken(tokeOptions);
+22             return tokenString;
+23         }
+
+	1.2.6.2 Обробник помилок
+
+
+Також можемо продемонструвати налаштування обробника винятків у програмі, який використовує мідлвару для обробки помилок веб-запитів:
+
+1 private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+2 
+3     public ExceptionHandlingMiddleware(ILogger<ExceptionHandlingMiddleware> logger) => _logger = logger;
+4 
+5     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
+6     {
+7         try
+8         {
+9             await next(context);
+10         }
+11         catch (Exception e)
+12         {
+13             _logger.LogError(e, e.Message);
+14 
+15             await HandleExceptionAsync(context, e);
+16         }
+17     }
+18 
+19     private static async Task HandleExceptionAsync(HttpContext httpContext, Exception exception)
+20     {
+21         httpContext.Response.ContentType = "application/json";
+22 
+23         var statusCode = StatusCodes.Status500InternalServerError;
+24         var errorMessage = "Internal Server Error";
+25 
+26         switch (exception)
+27         {
+28             case BadRequestException badRequestException:
+29                 statusCode = StatusCodes.Status400BadRequest;
+30                 errorMessage = badRequestException.Message;
+31                 break;
+32             case NotFoundException notFoundException:
+33                 statusCode = StatusCodes.Status404NotFound;
+34                 errorMessage = notFoundException.Message;
+35                 break;
+36             case ValidationException:
+37                 statusCode = StatusCodes.Status400BadRequest;
+38                 errorMessage = "Validation Error";
+39                 break;
+40         }
+41 
+42         httpContext.Response.StatusCode = statusCode;
+43 
+44         var errorResponse = new
+45         {
+46             errorMessage = errorMessage,
+47             errors = exception is ValidationException validationException
+48                 ? validationException.Errors.Select(error => new
+49                 {
+50                     property = error.Key,
+51                     message = error.Value
+52                 })
+53                 : null
+54         };
+55 
+56         await httpContext.Response.WriteAsync(JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull }));
+57     }
+
+
+1.2.6.3 Структура проекту
+
+
+Серверна частина проекту розроблена на мові програмування С# за допомогою фреймворку ASP.NET Core Web API. У якості СУБД використовується PostgreSQL. Також варто відзначити, що для зв’язку API із базою даних використовується Entity Framework Core 8.0.
+	Серверна частина була побудована з використанням патерну проектування «Чиста архітектруа» та «ДДД-архітектура». Проект складається з п’яти проектів, що побудовані таким чином, щоб проект у майбутньому можна було масштабувати та змінювати.
+
+ 
+Рисунок 5 – Архітектура проекту
+
+		Доменна частина проекту складається з опису основних сутностей, помилок для сутностей, ресурсів перекладу.
+
+ 
+Рисунок 6 – Файловий вигляд проекту Kolosok.Domain
+
+В частині пов’язаній з інфраструктурою описано налаштування бази даних, основних репозиторій для взаємодії з базою, а також специфікації, що є реалізацією патерну «Специфікація».
+
+Kolosol.Application містить опис усіх можливих дій над сутностями, контракти, інтерфейси для інших частин проекту, логіку валідації.
+
+ 
+Рисунок 8 – Файловий вигляд проекту Kolosok.Applicatoin
+
+В частині пов’язаній з інфраструктурою описано налаштування бази даних, основних репозиторій для взаємодії з базою, а також специфікації, що є реалізацією патерну «Специфікація».
+
+ 
+Рисунок 8 – Файловий вигляд проекту Kolosok.Inftrustructure
+
+
+Kolosok.Presentation представляє з себе налаштування Web API застосунку, опис взаємодії з іншими частинами проекту та опис усіх енпоінтів для взаємодії.
+
+ 
+Рисунок 8 – Файловий вигляд проекту Kolosok.Presentation
+
+Kolosok.Persistence містить бізнес-логіку, що не пов’язана з використанням бази даних, а також використовує стороні бібліотеки для роботи.
+
+ 
+
+ Рисунок 8 – Файловий вигляд проекту Kolosok.Persistence
+
+
+1.3 Висновки 
+
+
+В результаті виконання даної лабораторної роботи було створену серверну частину для «система надання допомоги постраждалим з використанням браслетів з підтримкою NFC». Описано прийняті інженерні рішення, розроблено діаграми, які ілюструють загальну архітектуру системи, будову її серверних компонентів та структуру бази даних.
+ 
+ПЕРЕЛІК ДЖЕРЕЛ ПОСИЛАННЯ 
+
+
+1. Посилання на репозиторій проєкту:  
+https://github.com/NureDzabakhidzeDavyd/apz-pzpi-21-3-dzabakhidze-davyd
+ 
+ДОДАТОК Б
+Частини програмного коду
+
+	Б.1 Код файлу ActionController.cs
+
+
+1 [ApiController]
+2 [Route("api/v1/[controller]")]
+3 public class ActionController  : ControllerBase
+4 {
+5     private readonly ILogger<BrigadeController> _logger;
+6     private readonly IMediator _mediator;
+7 
+8     public ActionController(ILogger<BrigadeController> logger, IMediator mediator)
+9     {
+10         _logger = logger;
+11         _mediator = mediator;
+12     }
+13 
+14     [HttpGet]
+15     public async Task<ActionResult> GetAll([FromQuery] SearchFilter filter)
+16     {
+17         var specification = new GetActionFullInformationSpecification();
+18         var query = new GetActionsPageQuery(filter);
+19         query.AddSpecification(specification);
+20         var actions = await _mediator.Send(query);
+21         return Ok(actions);
+22     }
+23 
+24     [HttpGet("{id:guid}")]
+25     public async Task<ActionResult> GetByIdAsync([FromRoute] Guid id)
+26     {
+27         var specification = new GetActionFullInformationSpecification();
+28         var query = new GetActionByIdQuery(id);
+29         query.AddSpecification(specification);
+30         var action = await _mediator.Send(query);
+31         return Ok(action);
+32     }
+33     
+34     //Obsolete
+35     [HttpPut("{id:guid}")]
+36     public async Task<IActionResult> Update([FromRoute] Guid id,
+37         [FromBody] CreateActionCommand updateBrigadeRequestCommand)
+38     {
+39         var _ = await _mediator.Send(updateBrigadeRequestCommand);
+40         return Ok();
+41     }
+42 
+43     [HttpPost]
+44     public async Task<IActionResult> Create(CreateActionCommand createBrigadeCommand)
+45     {
+46         var newAction = await _mediator.Send(createBrigadeCommand);
+47         return Ok(newAction);
+48     }
+49 
+50     [HttpDelete("{id:guid}")]
+51     public async Task<IActionResult> Delete([FromRoute] Guid id)
+52     {
+53         var request = new DeleteActionCommand(id);
+54         await _mediator.Send(request);
+55         return NoContent();
+56     }
+57 }
+ 
+	Б.2 Код файлу CreateActionCommand.cs
+
+1 public class CreateActionCommand : IRequest<ActionResponse>
+2 {
+3     public string Name { get; set; }
+4     public string Description { get; set; }
+5     public string ActionTime { get; set; }
+6     public string ActionType { get; set; }
+7     public string ActionPlace { get; set; }
+8     
+9     public Guid BrigadeRescuerId { get; set; }
+10     
+11     public Guid VictimId { get; set; }
+12 }
+13 
+14 public class CreateActionCommandHandler : IRequestHandler<CreateActionCommand, ActionResponse>
+15 {
+16     private readonly IUnitOfWork _unitOfWork;
+17     private readonly IMapper _mapper;
+18 
+19     public CreateActionCommandHandler(IMapper mapper, IUnitOfWork unitOfWork)
+20     {
+21         _mapper = mapper;
+22         _unitOfWork = unitOfWork;
+23     }
+24 
+25     public async Task<ActionResponse> Handle(CreateActionCommand request, CancellationToken cancellationToken)
+26     {
+27         var action = _mapper.Map<Domain.Entities.Action>(request);
+28         
+29         var victim = await _unitOfWork.VictimRepository.GetByFiltersAsync(null, victim => victim.Id == request.VictimId);
+30         if (victim is null)
+31         {
+32             throw new VictimNotFoundException(request.VictimId);
+33         }
+34         
+35         var brigadeRescuer = await _unitOfWork.BrigadeRescuerRepository.GetByFiltersAsync(null, brigade => brigade.Id == request.BrigadeRescuerId);
+36         if (brigadeRescuer is null)
+37         {
+38             throw new BrigadeRescuerNotFoundException(request.BrigadeRescuerId);
+39         }
+40 
+41         var newAction = await _unitOfWork.ActionRepository.CreateAsync(action);
+42         await _unitOfWork.SaveChangesAsync();
+43         var response = _mapper.Map<ActionResponse>(newAction);
+44         return response;
+45     }
+46 }
+47 
+48 public class CreateActionCommandValidator : AbstractValidator<CreateActionCommand>
+49 {
+50     public CreateActionCommandValidator()
+51     {
+52         RuleFor(p => p.Name).NotEmpty();
+53         RuleFor(p => p.Description).NotEmpty();
+54         RuleFor(p => p.ActionTime).NotEmpty();
+55         RuleFor(p => p.ActionType).NotEmpty();
+56         RuleFor(p => p.ActionPlace).NotEmpty();
+57         RuleFor(p => p.BrigadeRescuerId).NotEmpty();
+58         RuleFor(p => p.VictimId).NotEmpty();
+59     }
+60 }
+ 
+	Б.3 Код файлу BaseRepository.cs
+
+1 public class BaseRepository<TEntity> : IRepository<TEntity> where TEntity : BaseEntity
+2 {
+3     private readonly KolosokDbContext _context;
+4 
+5     protected DbSet<TEntity> DbSet => _context.Set<TEntity>();
+6 
+7     public BaseRepository(KolosokDbContext context)
+8     {
+9         _context = context;
+10     }
+11     
+12     public virtual async Task<IEnumerable<TEntity>> GetAllByFiltersAsync(
+13         SearchFilter searchFilter,
+14         params ISpecification<TEntity>[] specifications)
+15     {
+16         var query = DbSet.AsQueryable();
+17 
+18         if (specifications.Any())
+19         {
+20             query = ApplySpecification(query, specifications);
+21         }
+22         var result = await query
+23             .AsNoTracking()
+24             .Skip((searchFilter.PageNumber - 1) * searchFilter.PageSize)
+25             .Take(searchFilter.PageSize)
+26             .ToListAsync();
+27         return result;
+28     }
+29 
+30     public async Task<TEntity> GetByFiltersAsync(
+31         ISpecification<TEntity>[] specifications,
+32         params Expression<Func<TEntity, bool>>[] expressions)
+33     {
+34         var query = expressions.Aggregate(
+35             DbSet.AsQueryable(),
+36             (current, expression) => current.Where(expression)
+37         );
+38 
+39         if (specifications is not null && specifications.Any())
+40         {
+41             query = ApplySpecification(query, specifications);
+42         }
+43 
+44         return await query.FirstOrDefaultAsync();
+45     }
+46 
+47 
+48     private IQueryable<TEntity> ApplySpecification(IQueryable<TEntity> query,
+49         params ISpecification<TEntity>[] specifications)
+50     {
+51         query = specifications.Aggregate(query, SpecificationEvaluator.GetQuery);
+52         return query;
+53     }
+54 
+55     public async Task<TEntity> CreateAsync(TEntity entity)
+56     {
+57         var result = await DbSet.AddAsync(entity);
+58         return result.Entity;
+59     }
+60 
+61     public async Task<bool> DeleteAsync(Guid id)
+62     {
+63         var entity = await DbSet.FirstOrDefaultAsync(x => x.Id == id);
+64 
+65         if (entity == null)
+66         {
+67             return false;
+68         }
+69 
+70         DbSet.Remove(entity);
+71         return true;
+72     }
+73 
+74     public async Task<bool> ExistAsync(Expression<Func<TEntity, bool>> filter)
+75     {
+76         return await DbSet.AnyAsync(filter);
+77     }
+78 
+79     public TEntity Update(TEntity entity)
+80     {
+81         DbSet.Update(entity);
+82         return entity;
+83     }
+84     
+85     public async Task<bool> UpdatePropertiesAsync(
+86         Expression<Func<TEntity, bool>> filter,
+87         params (Expression<Func<TEntity, object>> property, object value)[] properties)
+88     {
+89         var entity = await DbSet.FirstOrDefaultAsync(filter);
+90 
+91         if (entity == null)
+92         {
+93             return false;
+94         }
+95 
+96         foreach (var (property, value) in properties)
+97         {
+98             _context.Entry(entity).Property(property).CurrentValue = value;
+99         }
+100 
+101         await _context.SaveChangesAsync();
+102 
+103         return true;
+104     }
+105 }
+
