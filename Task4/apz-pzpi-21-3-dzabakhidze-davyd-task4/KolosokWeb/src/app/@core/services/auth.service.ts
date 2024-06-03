@@ -24,6 +24,11 @@ export class AuthService {
     });
   }
 
+  register(registerUser: any): Observable<any> {
+    const apiUrl = 'http://localhost:5000/api/v1/auth';
+    return this._http.post(`${apiUrl}/register`, registerUser);
+  }
+
   async tryRefreshingTokens(token: string, refreshToken: string): Promise<boolean> {
     if (!token || !refreshToken) {
       return false;

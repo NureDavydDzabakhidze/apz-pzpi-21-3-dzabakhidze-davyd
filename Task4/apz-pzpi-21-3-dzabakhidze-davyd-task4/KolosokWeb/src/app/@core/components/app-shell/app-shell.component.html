@@ -44,6 +44,12 @@
           <span *ngIf="!isCollapsed">{{"menu.actions" | translate}}</span>
         </span>
       </a>
+      <a routerLink="/users" mat-list-item>
+        <span class="entry">
+          <mat-icon>person</mat-icon>
+          <span *ngIf="!isCollapsed">{{"menu.users" | translate}}</span>
+        </span>
+      </a>
     </mat-nav-list>
   </mat-sidenav>
   <mat-sidenav-content>

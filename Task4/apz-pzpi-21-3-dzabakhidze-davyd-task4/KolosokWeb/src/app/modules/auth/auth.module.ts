@@ -10,22 +10,28 @@ import {ReactiveFormsModule} from "@angular/forms";
 import {MatButtonModule} from "@angular/material/button";
 import {HttpClientModule} from "@angular/common/http";
 import {TranslateModule} from "@ngx-translate/core";
+import { RegisterComponent } from './register/register.component';
+import {SharedModule} from "../../@shared/shared.module";
+import {RouterLink} from "@angular/router";
 
 
 @NgModule({
   declarations: [
-    LoginComponent
+    LoginComponent,
+    RegisterComponent
   ],
-    imports: [
-        CommonModule,
-        AuthRoutingModule,
-        MatFormFieldModule,
-        MatInputModule,
-        HttpClientModule,
-        ReactiveFormsModule,
-        MatButtonModule,
-        MatIconModule,
-        TranslateModule
-    ]
+  imports: [
+    CommonModule,
+    AuthRoutingModule,
+    MatFormFieldModule,
+    MatInputModule,
+    HttpClientModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatIconModule,
+    TranslateModule,
+    SharedModule,
+    RouterLink
+  ]
 })
 export class AuthModule { }

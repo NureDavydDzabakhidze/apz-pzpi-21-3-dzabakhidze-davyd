@@ -16,7 +16,8 @@
     "diagnoses.description": "Record and manage diagnoses for victims, ensuring accurate medical history.",
     "victims": "Victims",
     "victims.description": "Track and manage all details related to victims, including their medical care.",
-    "home": "Menu"
+    "home": "Menu",
+    "users": "Users"
   },
   "contact": {
     "firstName": "First Name",

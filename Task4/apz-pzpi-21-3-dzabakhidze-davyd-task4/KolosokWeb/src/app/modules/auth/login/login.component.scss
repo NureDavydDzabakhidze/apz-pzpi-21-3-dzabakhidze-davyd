@@ -40,3 +40,17 @@ mat-form-field {
   width: 100%;
   margin-top: 16px;
 }
+
+.register-link {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.register-link a {
+  color: #3f51b5;
+  text-decoration: none;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}
