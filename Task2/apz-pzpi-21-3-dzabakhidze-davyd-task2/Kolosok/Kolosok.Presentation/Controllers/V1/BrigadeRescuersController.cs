@@ -57,7 +57,7 @@ public class BrigadeRescuersController : ControllerBase
         var query = new GetBrigadeRescuerByIdQuery(id);
         query.AddSpecification(specification);
         var brigadeRescuer = await _mediator.Send(query);
-        var qrCodeBytes = await _qrCodeService.GenerateQRCode(brigadeRescuer);
+        var qrCodeBytes = await _qrCodeService.GenerateQRCode(brigadeRescuer.Contact);
         return File(qrCodeBytes, "image/png");
     }
 

@@ -30,7 +30,7 @@ public class VictimsController : ControllerBase
         var query = new GetVictimByIdQuery(id);
         query.AddSpecification(specification);
         var victim = await _mediator.Send(query);
-        var qrCodeBytes = await _qrCodeService.GenerateQRCode(victim);
+        var qrCodeBytes = await _qrCodeService.GenerateQRCode(victim.Contact);
         return File(qrCodeBytes, "image/png");
     }
 
