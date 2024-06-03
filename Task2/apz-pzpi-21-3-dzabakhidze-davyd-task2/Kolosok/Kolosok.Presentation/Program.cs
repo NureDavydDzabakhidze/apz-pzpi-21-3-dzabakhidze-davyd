@@ -64,6 +64,7 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
 builder.Services.AddHttpClient();
+
 builder.Services.AddLocalization(x => x.ResourcesPath = "Resources");
 builder.Services.Configure<RequestLocalizationOptions>(
     options =>
@@ -79,6 +80,13 @@ builder.Services.Configure<RequestLocalizationOptions>(
                 }
             },
             new("uk-UA")
+            {
+                //DateTimeFormat =
+                //{
+                //    LongTimePattern = "DD/MM/YYYY",
+                //    ShortTimePattern = "DD/MM/YYYY"
+                //}
+            }
         };
 
         options.DefaultRequestCulture = new RequestCulture(culture: "en-US", uiCulture: "en-US");
@@ -93,7 +101,8 @@ builder.Services.AddCors((option) =>
         builder.WithOrigins("http://localhost:4200")
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials()
+            .WithExposedHeaders("content-disposition");
     });
 });
 builder.Services.AddAutoMapper(typeof(Mappings).Assembly);
@@ -139,15 +148,11 @@ builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBeh
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseRequestLocalization();
-app.UseHttpsRedirection();
 app.MapControllers();
 app.UseCors("kolosok-frontend");
 

@@ -8,10 +8,10 @@ services:
     image: ${DOCKER_REGISTRY-}kolosok.api
     build:
       context: .
-      dockerfile: Kolosok.API/Dockerfile
+      dockerfile: Kolosok.Presentation/Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - "ConnectionStrings:OrderingConnectionString=Server=order.db;Database=OrderDb;User Id=sa;Password=Your_Strong_Password"
+      - "ConnectionStrings:KolosokConnectionString=Host=localhost;Port=5432;Username=myuser;Password=mypassword;Database=Kolosok;"
     depends_on:
       - kolosok.db
     ports:

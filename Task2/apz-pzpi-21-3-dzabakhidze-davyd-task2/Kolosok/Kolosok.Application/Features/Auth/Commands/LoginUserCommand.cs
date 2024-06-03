@@ -3,6 +3,7 @@ using FluentValidation;
 using Kolosok.Application.Contracts.Auth;
 using Kolosok.Application.Interfaces.Infrastructure;
 using Kolosok.Application.Interfaces.Persistence;
+using Kolosok.Domain.Exceptions;
 using Kolosok.Domain.Exceptions.NotFound;
 using MediatR;
 
@@ -33,10 +34,9 @@ public class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, Authent
             throw new UserNotFoundException(request.Email);
         }
         
-        if(AuthExtension.VerifyPassword(request.Password, user.Password, user.Salt) == false)
+        if(user.Password == null || AuthExtension.VerifyPassword(request.Password, user.Password, user.Salt) == false)
         {
-            // throw new InvalidPasswordException();
-            throw new InvalidDataException();
+            throw new lnvalidPasswordException();
         }
 
         var userClaims = new List<Claim>()

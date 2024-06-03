@@ -13,18 +13,24 @@ public class BackupController : ControllerBase
     {
         _backupRepository = backupRepository;
     }
-    
+
     [HttpGet]
     public async Task<ActionResult> GetBackup()
     {
-        var backup = await _backupRepository.CreateBackupAsync();
-        return File(backup, "application/octet-stream");
+        var file = await _backupRepository.CreateBackupAsync();
+        return File(file.file, "application/octet-stream", file.fileName);
     }
-    
-    [HttpPost]
-    public async Task<IActionResult> RestoreBackup([FromBody] byte[] backup)
+
+    [HttpPost("restore")]
+    public async Task<IActionResult> RestoreBackup(IFormFile backupFile)
     {
-        await _backupRepository.RestoreBackupAsync(backup);
+        if (backupFile == null || backupFile.Length == 0)
+        {
+            return BadRequest("Invalid backup file.");
+        }
+
+        await using var backupStream = backupFile.OpenReadStream();
+        await _backupRepository.RestoreBackupAsync(backupStream);
         return Ok();
     }
 }

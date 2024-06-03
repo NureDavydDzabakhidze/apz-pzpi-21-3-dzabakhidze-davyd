@@ -10,13 +10,13 @@ namespace Kolosok.Presentation.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/[controller]")]
-public class VictimController : ControllerBase
+public class VictimsController : ControllerBase
 {
-    private readonly ILogger<BrigadeRescuerController> _logger;
+    private readonly ILogger<BrigadeRescuersController> _logger;
     private readonly IMediator _mediator;
     private readonly QRCodeService _qrCodeService;
 
-    public VictimController(ILogger<BrigadeRescuerController> logger, IMediator mediator, QRCodeService qrCodeService)
+    public VictimsController(ILogger<BrigadeRescuersController> logger, IMediator mediator, QRCodeService qrCodeService)
     {
         _logger = logger;
         _mediator = mediator;
@@ -26,7 +26,7 @@ public class VictimController : ControllerBase
     [HttpGet("{id:guid}/qrcode")]
     public async Task<ActionResult> GetVictimQRCodeById(Guid id)
     {
-        var specification = new GetVictimFullInformationSpecification();
+        var specification = new GetVictimQrInformationSpecification();
         var query = new GetVictimByIdQuery(id);
         query.AddSpecification(specification);
         var victim = await _mediator.Send(query);

@@ -9,12 +9,12 @@ namespace Kolosok.Presentation.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/[controller]")]
-public class ActionController  : ControllerBase
+public class ActionsController  : ControllerBase
 {
-    private readonly ILogger<BrigadeController> _logger;
+    private readonly ILogger<BrigadesController> _logger;
     private readonly IMediator _mediator;
 
-    public ActionController(ILogger<BrigadeController> logger, IMediator mediator)
+    public ActionsController(ILogger<BrigadesController> logger, IMediator mediator)
     {
         _logger = logger;
         _mediator = mediator;

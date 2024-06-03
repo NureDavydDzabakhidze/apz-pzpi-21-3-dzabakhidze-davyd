@@ -33,7 +33,8 @@ public class KolosokDbContext : DbContext
             modelBuilder.Entity<Brigade>()
                 .HasMany(p => p.BrigadeRescuers)
                 .WithOne(m => m.Brigade)
-                .HasForeignKey(p => p.BrigadeId);
+                .HasForeignKey(p => p.BrigadeId)
+                .OnDelete(DeleteBehavior.SetNull);
             
             modelBuilder.Entity<Victim>()
                 .HasMany(p => p.Diagnoses)
@@ -53,9 +54,10 @@ public class KolosokDbContext : DbContext
             modelBuilder.Entity<Victim>()
                 .HasOne(p => p.BrigadeRescuer)
                 .WithMany(m => m.Victims)
-                .HasForeignKey(p => p.BrigadeRescuerId);
-            
-            modelBuilder.Entity<Contact>().Property(e => e.Role).HasConversion<string>();
+                .HasForeignKey(p => p.BrigadeRescuerId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Contact>().Property(e => e.Role).HasConversion<string>();
             base.OnModelCreating(modelBuilder);
         }
 

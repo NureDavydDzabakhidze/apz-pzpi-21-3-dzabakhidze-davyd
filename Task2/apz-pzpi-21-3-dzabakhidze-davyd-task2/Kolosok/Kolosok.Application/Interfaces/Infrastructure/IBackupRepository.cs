@@ -2,6 +2,6 @@ namespace Kolosok.Application.Interfaces.Infrastructure;
 
 public interface IBackupRepository
 {
-    Task<byte[]> CreateBackupAsync();
-    public Task RestoreBackupAsync(byte[] backup);
+    Task<(string fileName, byte[] file)> CreateBackupAsync();
+    public Task RestoreBackupAsync(Stream backupStream);
 }

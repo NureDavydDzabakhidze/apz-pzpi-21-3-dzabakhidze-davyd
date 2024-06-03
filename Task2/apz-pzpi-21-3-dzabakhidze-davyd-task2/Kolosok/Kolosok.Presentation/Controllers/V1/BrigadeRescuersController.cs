@@ -10,13 +10,13 @@ namespace Kolosok.Presentation.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/[controller]")]
-public class BrigadeRescuerController : ControllerBase
+public class BrigadeRescuersController : ControllerBase
 {
-    private readonly ILogger<BrigadeRescuerController> _logger;
+    private readonly ILogger<BrigadeRescuersController> _logger;
     private readonly IMediator _mediator;
     private readonly QRCodeService _qrCodeService;
 
-    public BrigadeRescuerController(ILogger<BrigadeRescuerController> logger, IMediator mediator, QRCodeService qrCodeService)
+    public BrigadeRescuersController(ILogger<BrigadeRescuersController> logger, IMediator mediator, QRCodeService qrCodeService)
     {
         _logger = logger;
         _mediator = mediator;
@@ -53,7 +53,7 @@ public class BrigadeRescuerController : ControllerBase
     [HttpGet("{id:guid}/qrcode")]
     public async Task<ActionResult> GetQRCodeById(Guid id)
     {
-        var specification = new GetBrigadeRescuerFullInformationSpecification();
+        var specification = new GetBrigadeRescuerQrInformationSpecification();
         var query = new GetBrigadeRescuerByIdQuery(id);
         query.AddSpecification(specification);
         var brigadeRescuer = await _mediator.Send(query);

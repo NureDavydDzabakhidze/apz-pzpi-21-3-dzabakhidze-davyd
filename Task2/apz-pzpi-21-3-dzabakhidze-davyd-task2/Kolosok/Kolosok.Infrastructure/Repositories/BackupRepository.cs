@@ -13,57 +13,92 @@ public class BackupRepository : IBackupRepository
     {
         _configuration = configuration;
     }
-    
-    public async Task<byte[]> CreateBackupAsync()
+
+    public async Task<(string fileName, byte[] file)> CreateBackupAsync()
     {
-        try
+        var connectionString = _configuration.GetConnectionString("KolosokConnectionString");
+
+        var databaseName = connectionString.Split(";").First(x => x.Contains("Database")).Split("=").Last();
+        var userId = connectionString.Split(";").First(x => x.Contains("Username")).Split("=").Last();
+        var password = connectionString.Split(";").First(x => x.Contains("Password")).Split("=").Last();
+        var host = connectionString.Split(";").First(x => x.Contains("Host")).Split("=").Last();
+        var port = connectionString.Split(";").First(x => x.Contains("Port")).Split("=").Last();
+
+        var backupPath = _configuration["BackupPath"];
+        var backupFileName = $"{databaseName}_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.sql";
+        var restoreFilePath = Path.GetTempPath();
+        var backupFilePath = Path.Combine(restoreFilePath, backupFileName);
+
+        var containerName = _configuration["ConnectionStrings:ContainerName"];
+
+        using var process = new Process();
+        process.StartInfo.FileName = "cmd.exe";
+        process.StartInfo.Arguments = $"/C docker exec -i {containerName} pg_dump --dbname={databaseName} --username={userId} --host={host} --port={port} --format=plain --no-password --format=custom > {backupFilePath}";
+        process.StartInfo.Environment["PGPASSWORD"] = password;
+        process.StartInfo.UseShellExecute = false;
+        process.StartInfo.RedirectStandardError = true;
+
+        process.Start();
+        await process.WaitForExitAsync();
+
+        if (process.ExitCode != 0)
         {
-            // Temporarily store the backup in a file
-            var backupFilePath = $"backup_{DateTime.Now:yyyyMMddHHmmss}.sql";
-            var processStartInfo = new ProcessStartInfo
-            {
-                FileName = "pg_dump",
-                Arguments = $"-U postgres -Fc Kolosok -f {backupFilePath}",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                WorkingDirectory = @"D:\University\Course_3_Semester_2\apz\project\Task2\apz-pzpi-21-3-dzabakhidze-davyd-task2\Kolosok\Kolosok.Infrastructure\Backups"
-            };
-
-            using var process = Process.Start(processStartInfo);
-            await process.WaitForExitAsync();
-
-            // Read the backup file into a byte array
-            await using var fileStream = new FileStream(backupFilePath, FileMode.Open, FileAccess.Read);
-            using var memoryStream = new MemoryStream();
-            await fileStream.CopyToAsync(memoryStream);
-
-            // Delete the temporary backup file
-            File.Delete(backupFilePath);
-
-            return memoryStream.ToArray();
+            var error = await process.StandardError.ReadToEndAsync();
+            throw new Exception($"pg_dump failed: {error}");
         }
-        catch (Exception ex)
-        {
-            throw new Exception("Backup creation failed.", ex);
-        }
+
+        await using var fileStream = new FileStream(backupFilePath, FileMode.Open, FileAccess.Read);
+        using var memoryStream = new MemoryStream();
+        await fileStream.CopyToAsync(memoryStream);
+        fileStream.Close();
+        File.Delete(backupFilePath);
+        var file = memoryStream.ToArray();
+
+        return (backupFileName, file);
     }
 
 
-    public async Task RestoreBackupAsync(byte[] backup)
+    public async Task RestoreBackupAsync(Stream backupStream)
     {
+        var connectionString = _configuration.GetConnectionString("KolosokConnectionString");
+
+        var databaseName = connectionString.Split(";").First(x => x.Contains("Database")).Split("=").Last();
+        var userId = connectionString.Split(";").First(x => x.Contains("Username")).Split("=").Last();
+        var password = connectionString.Split(";").First(x => x.Contains("Password")).Split("=").Last();
+        var host = connectionString.Split(";").First(x => x.Contains("Host")).Split("=").Last();
+        var port = connectionString.Split(";").First(x => x.Contains("Port")).Split("=").Last();
+
+        var containerName = _configuration["ConnectionStrings:ContainerName"];
+        var restoreFilePath = Path.GetTempFileName();
+
         try
         {
-            using var memoryStream = new MemoryStream(backup);
-            await using var connection = new NpgsqlConnection(_configuration.GetConnectionString("KolosokConnectionString"));
-            await connection.OpenAsync();
+            using (var fileStream = new FileStream(restoreFilePath, FileMode.Create, FileAccess.Write))
+            {
+                await backupStream.CopyToAsync(fileStream);
+            }
 
-            await using var cmd = new NpgsqlCommand("pg_restore -U postgres -d Kolosok", connection);
-            cmd.Parameters.Add(new NpgsqlParameter("data", NpgsqlTypes.NpgsqlDbType.Bytea) { Value = memoryStream.ToArray() });
-            await cmd.ExecuteNonQueryAsync();
+            using var process = new Process();
+            process.StartInfo.FileName = "cmd.exe";
+            process.StartInfo.Arguments = $"/C docker exec -i {containerName} pg_restore --dbname={databaseName} --username={userId} --host={host} --port={port} --no-password --clean --create -f {restoreFilePath}";
+            process.StartInfo.Environment["PGPASSWORD"] = password;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardError = true;
+
+            process.Start();
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode != 0)
+            {
+                throw new Exception($"pg_restore failed: {await process.StandardError.ReadToEndAsync()}");
+            }
         }
-        catch (Exception ex)
+        finally
         {
-            throw new Exception("Backup restoration failed.", ex);
+            if (File.Exists(restoreFilePath))
+            {
+                File.Delete(restoreFilePath);
+            }
         }
     }
 }

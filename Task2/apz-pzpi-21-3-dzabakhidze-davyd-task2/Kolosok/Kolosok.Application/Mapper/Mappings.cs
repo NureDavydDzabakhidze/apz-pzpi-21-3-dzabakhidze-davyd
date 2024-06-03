@@ -28,9 +28,12 @@ public class Mappings : Profile
         CreateMap<ContactRequest, Contact>();
         CreateMap<Contact, ContactResponse>();
         
-        CreateMap<CreateBrigadeCommand, Brigade>();
-        CreateMap<UpdateBrigadeCommand, Brigade>();
+        CreateMap<CreateBrigadeCommand, Brigade>()
+            .ForMember(c => c.BrigadeRescuers, opt => opt.Ignore())
+            .ForMember(c => c.BrigadeSize, opt => opt.MapFrom(c => c.BrigadeRescuers.Count));
+        CreateMap<UpdateBrigadeCommand, Brigade>().ForMember(c => c.BrigadeRescuers, opt => opt.Ignore());
         CreateMap<Brigade, BrigadeResponse>();
+        CreateMap<Brigade, BrigadeLookupResponse>();
 
         CreateMap<CreateBrigadeRescuerCommand, BrigadeRescuer>();
         CreateMap<UpdateBrigadeRescuerRequestCommand, BrigadeRescuer>();
@@ -38,11 +41,14 @@ public class Mappings : Profile
         
         CreateMap<CreateVictimCommand, Victim>();
         CreateMap<Victim, VictimResponse>();
-        
+        CreateMap<Victim, VictimLookupResponse>();
+
         CreateMap<CreateDiagnosisCommand, Diagnosis>();
         CreateMap<Diagnosis, DiagnosisResponse>();
 
         CreateMap<CreateActionCommand, Action>();
         CreateMap<Action, ActionResponse>();
+        CreateMap<Action, ActionLookupResponse>();
+        CreateMap<Action, VictimActionLookupResponse>();
     }
 }

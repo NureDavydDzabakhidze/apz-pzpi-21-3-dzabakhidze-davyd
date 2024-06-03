@@ -36,9 +36,9 @@ public class CreateBrigadeCommandHandler : IRequestHandler<CreateBrigadeCommand,
         {
             foreach (var rescuerId in request.BrigadeRescuers)
             {
-                if(await _unitOfWork.BrigadeRescuerRepository.ExistAsync(b => b.Id == rescuerId))
+                if(!await _unitOfWork.BrigadeRescuerRepository.ExistAsync(b => b.Id == rescuerId))
                 {
-                    throw new BrigadeNotFoundException(rescuerId);
+                    throw new BrigadeRescuerNotFoundException(rescuerId);
                 }
 
                 await _unitOfWork.BrigadeRescuerRepository.UpdatePropertiesAsync(b => b.Id == rescuerId,

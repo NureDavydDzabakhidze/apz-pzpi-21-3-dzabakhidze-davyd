@@ -1,3 +1,4 @@
+using Kolosok.Application.Contracts.Action;
 using Kolosok.Application.Contracts.BrigadeRescuer;
 using Kolosok.Application.Contracts.Contacts;
 
@@ -7,6 +8,10 @@ public class VictimResponse : BaseResponse
 {
     public ContactResponse Contact { get; set; }
     public BrigadeRescuerResponse BrigadeRescuer { get; set; }
-        
-    // public ICollection<DiagnosisResponse> Diagnoses { get; set; }
+    public ICollection<VictimActionLookupResponse> Actions { get; set; }
+}
+
+public class VictimLookupResponse : BaseResponse
+{
+    public ContactResponse Contact { get; set; }
 }

@@ -41,6 +41,8 @@ public class CreateBrigadeRescuerCommandHandler : IRequestHandler<CreateBrigadeR
         }
         
         var brigadeRescuer = _mapper.Map<Domain.Entities.BrigadeRescuer>(request);
+        var contact = await _unitOfWork.ContactRepository.CreateAsync(brigadeRescuer.Contact);
+        brigadeRescuer.ContactId = contact.Id;
         var newBrigadeRescuer = await _unitOfWork.BrigadeRescuerRepository.CreateAsync(brigadeRescuer);
         await _unitOfWork.SaveChangesAsync();
         var response = _mapper.Map<BrigadeRescuerResponse>(newBrigadeRescuer);

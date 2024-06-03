@@ -10,7 +10,7 @@ namespace Kolosok.Domain.Entities
     {
         public string Name { get; set; }
         public string Description { get; set; }
-        public int BrigadeSize => BrigadeRescuers.Count > 0 ? BrigadeRescuers.Count : 0;
+        public int BrigadeSize => BrigadeRescuers?.Count > 0 ? BrigadeRescuers.Count : 0;
         
         public ICollection<BrigadeRescuer> BrigadeRescuers { get; set; }
     }
