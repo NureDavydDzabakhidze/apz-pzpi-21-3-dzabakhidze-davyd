@@ -9,15 +9,15 @@ const routes: Routes = [
     path: '',
     children: [
       {
+        path: 'create',
+        component: BrigadeRescuerEditComponent
+      },
+      {
         path: ':id',
         component: BrigadeRescuerDetailsComponent
       },
       {
         path: ':id/edit',
-        component: BrigadeRescuerEditComponent
-      },
-      {
-        path: 'create',
         component: BrigadeRescuerEditComponent
       },
       {

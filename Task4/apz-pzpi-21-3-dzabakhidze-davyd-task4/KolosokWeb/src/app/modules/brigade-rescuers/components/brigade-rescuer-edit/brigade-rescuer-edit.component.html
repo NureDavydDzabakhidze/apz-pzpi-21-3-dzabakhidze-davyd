@@ -1,5 +1,5 @@
 <mat-card class="edit-brigade-rescuer-card">
-  <mat-card-title>{{ brigadeRescuerId ? 'Edit' : 'Create' }} {{ 'brigadeRescuer.create' | translate }}</mat-card-title>
+  <mat-card-title>{{ 'brigadeRescuer.create' | translate }}</mat-card-title>
   <mat-card-content>
     <form [formGroup]="brigadeRescuerForm" (ngSubmit)="onSubmit()">
       <div formGroupName="contact" class="form-container">
