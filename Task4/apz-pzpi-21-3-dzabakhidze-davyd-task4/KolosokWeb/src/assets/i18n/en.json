@@ -83,6 +83,7 @@
     "email": "Enter your email",
     "password": "Enter your password",
     "submit": "Login",
+    "register": "Don't have an account? Register",
     "errors": {
       "required": "You must enter a value",
       "email": "Not a valid email"
