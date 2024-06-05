@@ -1,0 +1,376 @@
+1 МЕТА РОБОТИ
+
+
+Метою лабораторної роботи є набуття навичок із розробки клієнтської частини застосунків, а саме для розрроблюваної програмної системи для надання допомоги постраждалим з використанням браслетів з підтримкою NFC.
+
+
+2 ХІД РОБОТИ
+2.1 Опис інженерних рішень
+
+
+Клієнтська частина проекту була розроблена на мові програмування TypeScript за допомогою фреймворку Angular 16. Створення самого проекту відбувалося у редакторі коду Jetbrains Web Storm 2023.2.5. Для авторизації та автентифікації користувачів було використано бібліотеку «auth0/angular-jwt». Angular для створення базових компонентів сайту.
+Кореневою папкою є папка app. В ній знаходяться різні компоненти клієнтської частини (файлова структура проекту наведена в додатку А). Папка @core, що містить компоненти, які не мають логіки, але, повинні обов'язково бути завантаженими на етапі відкриття сайту; папка modules, в якій усі необхідні компоненти для взаємодії з базовими сутностями системи; папка models з інтерфейсами, що визначають сутності і папка shared у які містяться компоненти, що використовуватимуться у різних модулях. 
+Для кожної сутності було створено окрему сторінку. На головних екранах цих сторінок є таблиця для перегляду даних та можливість взаємодіяти з ними.
+Для	заповнення	даних	(редагування та додавання) були створені сторінки із відповідними формами.
+
+2.2	Пояснення частин програмного коду
+     2.2.1 Авторизація
+
+
+Після того як користувача було ідентифіковано він отримує токен доступу («access token»), який використовується для отримання захищених ресурсів. Цей токен поміщається в локальне сховище («local storage») і при кожному запиті дістається зі сховища та перевіряється (додаток А). Перевірка  токену відбувається у класі «AuthGuard».
+
+1  @Injectable({
+2    providedIn: 'root'
+3  })
+4  export class AuthGuard implements CanActivate {
+5    constructor(
+6      private router: Router,
+7      private jwtHelper: JwtHelperService,
+8      private authService: AuthService
+9    ) {}
+10  
+11    async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+12      const token = localStorage.getItem('jwt');
+13  
+14      if (token && !this.jwtHelper.isTokenExpired(token)) {
+15        console.log(this.jwtHelper.decodeToken(token));
+16        return true;
+17      }
+18  
+19      const refreshToken = localStorage.getItem('refreshToken');
+20      if (!refreshToken) {
+21        this.router.navigate(['auth']);
+22        return false;
+23      }
+24  
+25      const isRefreshSuccess = await this.authService.tryRefreshingTokens(token!, refreshToken);
+26      if (!isRefreshSuccess) {
+27        this.router.navigate(['auth']);
+28      }
+29  
+30      return isRefreshSuccess;
+31    }
+32	}
+
+
+2.2.2 Обробка помилок
+
+
+Обробка помилок була здійснена за допомогою MatSnackBar – класу бібліотеки Angular Material, що повідомляє користувачу про різні відповіді від серверної частини та помилки на стороні клієнта. Ниже наведений код сторінки авторизації користувача.
+
+1  @Component({
+2    selector: 'app-login',
+3    templateUrl: './login.component.html',
+4    styleUrls: ['./login.component.scss']
+5  })
+6  export class LoginComponent implements OnInit {
+7    loginForm!: FormGroup;
+8    hide = true;
+9  
+10    constructor(
+11      private formBuilder: FormBuilder,
+12      private router: Router,
+13      private http: HttpClient,
+14      private snackBar: MatSnackBar,
+15      private translate: TranslateService
+16    ) {}
+17  
+18    ngOnInit() {
+19      this.loginForm = this.formBuilder.group({
+20        email: ['', [Validators.required, Validators.email]],
+21        password: ['', [Validators.required]]
+22      });
+23    }
+24  
+25    getErrorMessage(field: string) {
+26      const control = this.loginForm.get(field);
+27      if (control && control.errors) {
+28        if (control.hasError('required')) {
+29          return this.translate.instant('login.errors.required');
+30        } else if (control.hasError('email')) {
+31          return this.translate.instant('login.errors.email');
+32        }
+33      }
+34      return '';
+35    }
+36  
+37    togglePasswordVisibility() {
+38      this.hide = !this.hide;
+39    }
+40  
+41    onSubmit() {
+42      if (this.loginForm.valid) {
+43        const email = this.loginForm.get('email')?.value;
+44        const password = this.loginForm.get('password')?.value;
+45        const loginModel: LoginModel = { email, password };
+46  
+47        this.http.post<AuthenticatedResponse>("http://localhost:5000/api/v1/auth/login", loginModel, {
+48          headers: new HttpHeaders({ "Content-Type": "application/json" })
+49        }).subscribe({
+50          next: (response: AuthenticatedResponse) => {
+51            const token = response.token;
+52            const refreshToken = response.refreshToken;
+53            localStorage.setItem("jwt", token);
+54            localStorage.setItem("refreshToken", refreshToken);
+55            this.router.navigate(["/"]);
+56          },
+57          error: (response: HttpErrorResponse) => {
+58              this.snackBar.open(response.error.errorMessage, 'Close', {
+59                panelClass: ['custom-snackbar', 'snackbar-success'],
+60                duration: 3000,
+61              });
+62          }
+63        });
+64      }
+67    }
+68	}
+
+
+2.2.3	Локалізація сторінки та помилок
+
+
+Для локалізації клієнтської частини було використано бібліотеку ngx-translate, що надає доступ до використання TranslateService – класу для роботи з перекладами. Для локалізації було створено два файли формату json та папку i18n. У подальшому сервіс перекладу буде брати в залежності від обраної локалізації її відповідні зміні та демонструвати на сторінках.
+Для того, щоб отримувати з серверної частини відповіді про помилки або іншу інформацію з використанням відповідної мови було створено перехоплювач, що для кожного запиту додаватиме значення для поля Accept-Language.
+
+1  @Injectable()
+2  export class LanguageInterceptor implements HttpInterceptor {
+3  
+4    constructor(private translate: TranslateService) {}
+5  
+6    intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+7      const currentLang = this.translate.currentLang || this.translate.defaultLang;
+8      const language = currentLang === 'ua' ? 'uk-UA' : 'en-US';
+9      const modifiedRequest = request.clone({
+10        setHeaders: { 'Accept-Language': language }
+11      });
+12      return next.handle(modifiedRequest);
+13    }
+14  }
+
+
+2.3	Діаграми
+
+
+Для клієнтської частини було створено діаграму прецедентів (рис. 1). Вона надає користувачам доступ до функціоналу серверної частини. Цядіаграма також містить 3 актора і функціональні можливості серверної частини.
+
+ 
+Рисунок 1 – Діаграма прецедентів клієнтської частини програмної програмної системи надання допомоги постраждалим з використанням браслетів з підтримкою NFC
+
+Також було створено діаграму компонентів (рис. 2). Вона надає можливість візуалізувати, як компоненти взаємодіють між собою в межах системи. Крім того, ця діаграма є корисною в управлінні модульністю системи та складністю її структури.
+
+ 
+Рисунок 1 – Діаграма компонентів клієнтської частини програмної програмної системи надання допомоги постраждалим з використанням браслетів з підтримкою NFC
+
+Діаграма пакетів для клієнтської частини містить 2 головних пакети:
+Modules і Core (рис. 3). Всередині цих пакетів знаходяться інші пакети, що взаємодіють одне з одним.
+
+ 
+Рисунок 3 – Діаграма пакетів клієнтської частини програмної програмної системи надання допомоги постраждалим з використанням браслетів з підтримкою NFC
+
+До того ж, було створено діаграму станів (рис. 4). Ця діаграма показує увесь процес взаємодії користувача із клієнтською частиною. Вона надає можливість зрозуміти які дії необхідно виконати для отримання певного результату.
+
+ 
+Рисунок 4 – Діаграма станів клієнтської частини програмної програмної системи надання допомоги постраждалим з використанням браслетів з підтримкою NFC
+ 
+ВИСНОВКИ
+Під час виконання лабораторної роботи було створено клієнтську частину програмної системи для надання допомоги постраждалим з використанням браслетів з підтримкою NFC.
+ 
+ДОДАТОК А
+Файлова структура клієнтської частини
+
+├───app
+│   ├───@core
+│   │   ├───components
+│   │   │   ├───app-home
+│   │   │   └───app-shell
+│   │   ├───guards
+│   │   ├───interceptors
+│   │   └───services
+│   ├───@shared
+│   │   ├───components
+│   │   │   ├───confirm-delete-modal
+│   │   │   └───k-table
+│   │   └───pipes
+│   ├───models
+│   └───modules
+│       ├───actions
+│       │   └───components
+│       │       ├───action-details
+│       │       ├───action-edit
+│       │       └───actions-list
+│       ├───auth
+│       │   ├───login
+│       │   └───register
+│       ├───brigade
+│       │   └───components
+│       │       ├───brigade-details
+│       │       ├───brigade-edit
+│       │       └───brigades-list
+│       ├───brigade-rescuers
+│       │   └───components
+│       │       ├───brigade-rescuer-details
+│       │       ├───brigade-rescuer-edit
+│       │       └───users-list
+│       └───victims
+│       │       └───users-list
+│       └───victims
+│           └───components
+│               ├───victim-details
+│               ├───victim-edit-component
+│               └───victims-list
+├───assets
+│   └───i18n
+└───environments
+ 
+ДОДАТОК Б
+Код brigades-list.component.ts
+
+1  @Component({
+2    selector: 'app-brigade-list',
+3    templateUrl: './brigades-list.component.html',
+4    styleUrls: ['./brigades-list.component.scss']
+5  })
+6  export class BrigadeListComponent implements OnInit {
+7    public displayedColumns: string[] = ['name', 'description', 'brigadeSize'];
+8    public brigades: Brigade[] = [];
+9    public totalRecords: number = this.brigades.length;
+10    public pageSize = 10;
+11    public currentPage = 1;
+12  
+13    constructor(private brigadeService: BrigadeService, private router: Router, private dialog: MatDialog) {}
+14  
+15    ngOnInit(): void {
+16      this.loadBrigades();
+17    }
+18  
+19    loadBrigades(): void {
+20      this.brigadeService.getAll(this.currentPage, this.pageSize).subscribe(
+21        (brigades: Brigade[]) => {
+22          this.brigades = brigades;
+23          this.totalRecords = brigades.length;
+24        }
+25      );
+26    }
+27  
+28    deleteBrigade(brigadeId: string): void {
+29      this.brigadeService.delete(brigadeId).subscribe(
+30        () => {
+31          this.loadBrigades();
+32        },
+33        (error) => {
+34          console.error('Помилка видалення бригади:', error);
+35        }
+36      );
+37    }
+38  
+39    public deleteBrigadeConfirmation(brigadeId: string): void {
+40      const dialogRef = this.dialog.open(ConfirmDeleteModalComponent, {
+41        width: '250px',
+42      });
+43  
+44      dialogRef.afterClosed().subscribe((result) => {
+45        if (result) {
+46          this.deleteBrigade(brigadeId);
+47        }
+48      });
+49    }
+50  
+51    openBrigadeDetails(brigadeId: string): void {
+52      this.router.navigate(['brigades', brigadeId]);
+53    }
+54  
+55    onPageChange(page: number): void {
+56      this.currentPage = page;
+57      this.loadBrigades();
+58    }
+59  
+60    editBrigadeConfirmation(brigadeId: string) {
+61      this.router.navigate(['brigades', brigadeId, 'edit']);
+62    }
+63  
+64    createNewBrigade(): void {
+65      this.router.navigate(['brigades/create']);
+66    }
+67  }
+ 
+ДОДАТОК В
+Код data.service.ts
+
+1  @Injectable({
+2    providedIn: 'root'
+3  })
+4  export abstract class DataService<T extends BaseEntity> {
+5    protected apiUrl = environment.apiUrl;
+6  
+7    constructor(protected http: HttpClient, protected endpoint: string) {
+8      this.apiUrl = `${this.apiUrl}/api/v1/${endpoint}`;
+9    }
+10  
+11    getAll(page: number, pageSize: number): Observable<T[]> {
+12      return this.http.get<T[]>(`${this.apiUrl}?page=${page}&pageSize=${pageSize}`);
+13    }
+14  
+15    getById(id: string): Observable<T> {
+16      return this.http.get<T>(`${this.apiUrl}/${id}`);
+17    }
+18  
+19    create(TData: T): Observable<T> {
+20      return this.http.post<T>(this.apiUrl, TData);
+21    }
+22  
+23    delete(id: string): Observable<any> {
+24      return this.http.delete(`${this.apiUrl}/${id}`);
+25    }
+26  
+27    update(TData: T): Observable<T> {
+28      return this.http.put<T>(`${this.apiUrl}/${TData.id}`, TData);
+29    }
+30  }
+ 
+ДОДАТОК Г
+Код profile-details.component.ts
+
+1  @Component({
+2    selector: 'app-profile-details',
+3    templateUrl: './profile-details.component.html',
+4    styleUrls: ['./profile-details.component.scss']
+5  })
+6  export class ProfileDetailsComponent implements OnInit{
+7    user$: Observable<Contact> | undefined;
+8  
+9    constructor(private authService: AuthService,
+10                private backupService: BackupService,
+11                private router: Router,
+12                private fileServerService: FileSaverService) {}
+13  
+14    ngOnInit(): void {
+15      this.user$ = this.authService.getProfile();
+16    }
+17  
+18    onLogout() {
+19      this.authService.logout().subscribe(() => {
+20        this.router.navigate(['/home']);
+21      });
+22    }
+23  
+24    onGetBackup() {
+25      this.backupService.getBackup().subscribe(response => {
+26        const contentDisposition = response.headers.get('Content-Disposition');
+27        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/i;
+28        const matches = filenameRegex.exec(contentDisposition);
+29  
+30        let filename = 'backup.sql';
+31        if (matches != null && matches[1]) {
+32          filename = matches[1].replace(/['"]/g, ''); // Remove quotes
+33        }
+34  
+35        const blob = new Blob([response.body], { type: 'application/octet-stream' });
+36        const url = window.URL.createObjectURL(blob);
+37        const a = document.createElement('a');
+38        a.href = url;
+39        a.download = filename;
+40        a.click();
+41        window.URL.revokeObjectURL(url);
+42      });
+43    }
+44  }
